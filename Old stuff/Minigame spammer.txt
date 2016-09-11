@@ -1,0 +1,58 @@
+from toontown.shtiker import PurchaseManager
+from toontown.minigame import DistributedMinigame
+
+class MinigameSpammer:  
+    oldAnnounceGenerate1=DistributedMinigame.DistributedMinigame.announceGenerate
+    oldAnnounceGenerate2=PurchaseManager.PurchaseManager.announceGenerate    
+    
+    def __init__(self):
+        self.autoerGui=AutoerGui('Minigame Spammer',['Run Time',"Number of games","Games's/Hour",'Current Game','N/A'],\
+                                 ['self.hours+":"+self.minutes+":"+self.seconds',\
+                                  'str(minigameSpammer.minigames)',\
+                                  'str(self.workOutNumberAnHour(minigameSpammer.minigames))'\
+                                 ,'minigameSpammer.getCurrentGame()'\
+                                 ,'"N/A"'],\
+                                 'MINI SPAM','None')
+        self.minigames=0
+        
+    def newAnnounceGenerate1(self,newSelf):
+        self.oldAnnounceGenerate1(newSelf)
+        self.currentGame=newSelf
+        self.skipMinigame()
+
+    def newAnnounceGenerate2(self,newSelf):
+        self.oldAnnounceGenerate2(newSelf)
+        self.skipPurchase()
+    
+    def skipMinigame(self):
+        messenger.send('minigameAbort')
+        self.minigames+=1
+    
+    def skipPurchase(self):
+        messenger.send('purchasePlayAgain')
+    
+    def getCurrentGame(self):
+        try:
+            return self.currentGame.__class__.__name__
+        except:
+            return 'None'
+    
+    def revert(self):
+        DistributedMinigame.DistributedMinigame.announceGenerate=self.oldAnnounceGenerate1
+        PurchaseManager.PurchaseManager.announceGenerate=self.oldAnnounceGenerate2
+        self.autoerGui.destroy()
+    
+    def start(self):
+        DistributedMinigame.DistributedMinigame.announceGenerate=lambda newSelf: self.newAnnounceGenerate1(newSelf)
+        PurchaseManager.PurchaseManager.announceGenerate=lambda newSelf: self.newAnnounceGenerate2(newSelf)
+        self.minigames=0
+        self.autoerGui.startTimer()
+    
+    def stop(self):
+        self.autoerGui.display.newLine('Stopped')
+        self.autoerGui.stopTimer()
+        base.cr.gameFSM.forceTransition('closeShard')
+        DistributedMinigame.DistributedMinigame.announceGenerate=self.oldAnnounceGenerate1
+        PurchaseManager.PurchaseManager.announceGenerate=self.oldAnnounceGenerate2
+
+minigameSpammer=MinigameSpammer()

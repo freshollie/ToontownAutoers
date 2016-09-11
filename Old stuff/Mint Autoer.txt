@@ -1,0 +1,547 @@
+#Freshollie 3/6/2013
+#CFO maxer 
+
+import toontown
+import random
+from direct.interval.IntervalGlobal import *
+from direct.gui.DirectGui import *
+from toontown.coghq import DistributedMintBattle
+from toontown.suit.DistributedMintSuit import DistributedMintSuit
+from toontown.suit.DistributedSuit import DistributedSuit
+from direct.distributed import DistributedObject
+from toontown.battle import DistributedBattle
+from toontown.suit.DistributedCashbotBoss import DistributedCashbotBoss
+DistributedCashbotBoss.newState=DistributedCashbotBoss.setState
+faceOffHook = lambda self, ts, name, callback:self.d_faceOffDone(self)
+DistributedBattle.DistributedBattle._DistributedBattle__faceOff = faceOffHook
+
+toontown.toonbase.ToontownBattleGlobals.SkipMovie=1
+
+emptyShardList=[]
+for shard in base.cr.activeDistrictMap:
+	if base.cr.activeDistrictMap[shard].avatarCount<30:
+		emptyShardList.append(shard)
+
+base.localAvatar.book.pages[1].showPop = 1
+
+try:
+    oldSendUpdate
+except:
+    oldSendUpdate=DistributedObject.DistributedObject.sendUpdate
+def sendUpdateHook(self, fieldName, args=[], sendToId=None):
+    if fieldName=="requestAttack":
+        oldSendUpdate(self,"requestAttack", args, sendToId)
+        oldSendUpdate(self,"movieDone",[])
+        self.d_rewardDone(base.localAvatar.doId)
+    else:
+        oldSendUpdate(self,fieldName, args, sendToId)
+DistributedObject.DistributedObject.sendUpdate=sendUpdateHook
+
+try:
+	oldEnter
+except:
+	oldEnter=toontown.toon.HealthForceAcknowledge.HealthForceAcknowledge.enter
+def newHook(self,hplevel):
+	try:
+		oldEnter(self,hplevel)
+		self.handleOk(base.localAvatar.getHp())
+		self.exit()
+	except:
+		pass
+toontown.toon.HealthForceAcknowledge.HealthForceAcknowledge.enter=newHook
+
+faceOffHook = lambda self, ts, name, callback:self.d_faceOffDone(self)
+DistributedMintBattle.DistributedMintBattle._DistributedLevelBattle__faceOff = faceOffHook
+
+class OtherFunctions:
+
+    def __init__(self):
+        self.firstTrack=2
+        self.secondTrack=0
+        self.thirdTrack=4
+        self.fourthTrack=3
+        self.desiredLevel1=5
+        self.desiredLevel2=4
+        self.desiredLevel3=5
+        self.desiredLevel4=5
+        self.createInventory()
+        self.cogBucks={1:[40]\
+                      ,2:[60,50]\
+                      ,3:[60,80,100]\
+                      ,4:[70,100,130,160]\
+                      ,5:[300,120,160,210,260]\
+                      ,6:[500,190,260,340,420]\
+                      ,7:[550,420,310,800,680]\
+                      ,8:[680,500,1300,890,1100]\
+                      ,9:[2100,810,1100,1440]\
+                      ,10:[3400,1310,1780]\
+                      ,11:[5500,2120]\
+                      ,12:[8900]\
+                      ,13:[1100]\
+                      ,14:[8900]\
+                      ,15:[1100]\
+                      ,16:[1440]\
+                      ,17:[1780]\
+                      ,18:[2120]\
+                      ,19:[8900]\
+                      ,20:[1100]\
+                      ,21:[1440]\
+                      ,22:[1780]\
+                      ,23:[2120]\
+                      ,24:[2460]\
+                      ,25:[2800]\
+                      ,26:[3140]\
+                      ,27:[3480]\
+                      ,28:[3820]\
+                      ,29:[8900]\
+                      ,30:[1100]\
+                      ,31:[1440]\
+                      ,32:[1780]\
+                      ,33:[2120]\
+                      ,34:[2460]\
+                      ,35:[2800]\
+                      ,36:[3140]\
+                      ,37:[3480]\
+                      ,38:[3820]\
+                      ,39:[8900]\
+                      ,40:[1100]\
+                      ,41:[1440]\
+                      ,42:[1780]\
+                      ,43:[2120]\
+                      ,44:[2460]\
+                      ,45:[2800]\
+                      ,46:[3140]\
+                      ,47:[3480]\
+                      ,48:[3820]\
+                      ,49:[8900]\
+                      ,50:[0]}
+                       
+        __builtins__.gagshop_zoneId = 4503
+        self.shouldContinue=True
+        self.prevBucks=0
+        self.falseFlag=False
+        self.checkDeadSeq=Sequence(Wait(50),Func(self.checkDead))
+
+    def createInventory(self):
+        self.desiredInv=""
+        if self.desiredLevel1==6:
+            self.desiredLevel1=5
+            
+        if self.desiredLevel2==6:
+            self.desiredLevel2=5
+            
+        for i in range(49):
+            if i==((self.firstTrack*7)+self.desiredLevel1):
+                if self.firstTrack==1:
+                    self.desiredInv+="\x02"
+                elif self.desiredLevel1>3:
+                    self.desiredInv+="\x02"
+                else:
+                    self.desiredInv+="\x04"
+            elif i==((self.secondTrack*7)+self.desiredLevel2):
+                if self.secondTrack==1:
+                    self.desiredInv+="\x02"
+                elif self.desiredLevel2>3:
+                    self.desiredInv+="\x02"
+                else:
+                    self.desiredInv+="\x04"
+            elif i==((self.thirdTrack*7)+self.desiredLevel3):
+                if self.thirdTrack==1:
+                    self.desiredInv+="\x02"
+                elif self.desiredLevel3>3:
+                    self.desiredInv+="\x02"
+                else:
+                    self.desiredInv+="\x04"
+            else:
+                self.desiredInv+="\x00"
+
+     
+    def loadGagshop(self):           
+        if not base.cr.doFind('Clerk'):
+            def requestZoneIdResponse(zoneId, context):
+                base.cr.doFind('WelcomeValleyManager').doCallbackContext(context, zoneId)
+            base.cr.doFind('WelcomeValleyManager').requestZoneIdResponse = requestZoneIdResponse
+            base.cr.doFind('WelcomeValleyManager').sendUpdate('requestZoneIdMessage', [0, 1])
+            __builtins__.contextId = base.cr.addInterest(base.localAvatar.defaultShard, __builtins__.gagshop_zoneId, 4, event=None)
+        try:
+            if not int(render.find('**/*gagShop_interior_english*').getZ()) == 8**8:
+                render.find('**/*gagShop_interior_english*').setZ(8**8)
+                for k in base.cr.doFindAll('Clerk'):
+                    k.freeAvatar = lambda *x:None
+                    k.nametag.unmanage(base.marginManager)
+        except:
+            pass
+            
+    def buyGags(self):
+        firstTrack=self.firstTrack
+        secondTrack=self.secondTrack
+        thirdTrack=self.thirdTrack
+        fourthTrack=self.fourthTrack
+        
+        desiredLevel1=self.desiredLevel1
+        desiredLevel2=self.desiredLevel2
+        desiredLevel3=self.desiredLevel3
+        desiredLevel4=self.desiredLevel4
+        
+        desiredInv=self.desiredInv
+        try:
+            maxCarryGags = base.localAvatar.getMaxCarry()     
+            if base.cr.doFindAll('Clerk'):
+                num_gags = 0
+                for inventory_number in base.localAvatar.inventory.makeFromNetString(desiredInv):
+                    for k in inventory_number[:-1]:
+                        num_gags += k
+                for clerk in base.cr.doFindAll('Clerk'):
+                    change = (base.localAvatar.getMoney() - num_gags)
+                    oldString = base.localAvatar.inventory.makeNetString()
+                    newString = desiredInv[:6] + oldString[6] + desiredInv[7:13] + oldString[13] + desiredInv[14:20] + oldString[20] + desiredInv[21:27] + oldString[27] + desiredInv[28:34] + oldString[34] + desiredInv[35:48] + oldString[48]
+                    clerk.sendUpdate('setInventory', [newString, change, 1])
+                money = base.localAvatar.getMoney()
+                maxMoney = base.localAvatar.getMaxMoney()
+                base.cr.bankManager.d_transferMoney(money - maxMoney)
+        except:
+            pass
+    
+    def unloadGagshop(self):
+        if hasattr(__builtins__, 'contextId'):
+            try:
+                base.cr.removeInterest(__builtins__.contextId)
+            except:
+                pass
+        
+    def restock(self):
+        firstTrack=self.firstTrack
+        secondTrack=self.secondTrack
+        thirdTrack=self.thirdTrack
+        fourthTrack=self.fourthTrack
+        
+        desiredLevel1=self.desiredLevel1
+        desiredLevel2=self.desiredLevel2
+        desiredLevel3=self.desiredLevel3
+        desiredLevel4=self.desiredLevel4  
+        
+        try:
+            if base.localAvatar.inventory.inventory[firstTrack][desiredLevel1]<2 or base.localAvatar.inventory.inventory[secondTrack][desiredLevel2]<2:
+                Sequence(Func(self.loadGagshop),Wait(1),Func(self.buyGags),Wait(0.5),Func(self.unloadGagshop)).start()
+        
+        except:
+            pass
+
+    def attack(self):
+        try:
+            for battle in base.cr.doFindAll('battle'):
+                if base.localAvatar.inventory.inventory[self.firstTrack][self.desiredLevel1]>0:
+                    battle.sendUpdate('requestAttack', [self.firstTrack, self.desiredLevel1, battle.suits[0].doId])
+                else:
+                    break
+                    
+                if base.localAvatar.getHp()<(base.localAvatar.getMaxHp()*0.75):
+                
+                    if base.localAvatar.inventory.inventory[self.secondTrack][self.desiredLevel2]>0:
+                        battle.sendUpdate('requestAttack', [self.secondTrack, self.desiredLevel2, base.localAvatar.doId])
+                    else:
+                        break
+                        
+                    if base.localAvatar.inventory.inventory[self.thirdTrack][self.desiredLevel3]>0:
+                        battle.sendUpdate('requestAttack', [self.thirdTrack, self.desiredLevel3, battle.suits[0].doId])
+                    else:
+                        break
+                        
+                else:
+                    if base.localAvatar.inventory.inventory[self.thirdTrack][self.desiredLevel3]>0:
+                        battle.sendUpdate('requestAttack', [self.thirdTrack, self.desiredLevel3, battle.suits[0].doId])
+                    else:
+                        break
+        except:
+            pass
+        
+    def checkCogbucks(self):
+        overRide=False
+        if self.falseFlag:
+            if self.prevBucks!=base.localAvatar.cogMerits[2]:
+                self.falseFlag==False
+            else:
+                overRide=True
+       
+        if self.haveJb():
+            if self.shouldContinue:
+                if base.localAvatar.cogMerits[2] in self.cogBucks[base.localAvatar.cogLevels[2]+1] and not overRide:
+                    cfoAuto.start()
+                else:
+                    mintAutoer.attackSeq.loop()
+                    mintAutoer.startMint()
+            else:
+                base.localAvatar.setSystemMessage(1,"Thanks for using freshollie and chrome's mint autoer!")
+        else:
+            base.localAvatar.setSystemMessage(0,"You don't have any jellybeans, go use freshollie's fishing code")
+
+    def getTreasure(self):
+        for treasure in base.cr.doFindAll("Treasure"):
+            treasure.d_requestGrab()     
+        
+    def checkDead(self):
+        if not base.cr.doFind('C. F. O') and not base.cr.doFind("DistributedCashbotHQDoor") and base.cr.doFind("donald"):
+            self.restock()
+            self.getTreasure()
+            self.walk()
+            Sequence(Wait(0.5),Func(self.teleBack),Wait(7),Func(self.checkCogbucks)).start()
+            
+    def walk(self):
+        try:
+            base.cr.playGame.getPlace().fsm.forceTransition('walk')
+        except:
+            pass
+            
+    def checkFinish(self,check,sequence,nextSeq,args):
+        if args=="notFind":
+            if base.cr.doFindAll(check)==[]:
+                sequence.finish()
+                nextSeq.start()
+        elif args=="find":
+            if base.cr.doFindAll(check)!=[]:
+                sequence.finish()
+                nextSeq.start()
+       
+    def teleBack(self):
+        try:
+            base.cr.playGame.getPlace().handleBookCloseTeleport(12000, 12000)
+        except:
+            pass
+                
+        
+    def haveJb(self):
+        if base.localAvatar.cogLevels[2]==49:
+            return True
+        elif base.localAvatar.getMoney()==0:
+            return False
+        else:
+            return True
+           
+    def enterRandomBattle(self):
+        if base.cr.doFindAll('battle')==[]:
+            battles = []
+            cogList = base.cr.doFindAll("render")
+            for x in cogList:
+                if isinstance(x, DistributedSuit):
+                    if x.activeState == 6:
+                        battles.append(x)
+            if battles != []:
+                battle = random.choice(battles)
+                pos, hpr = battle.getPos(), battle.getHpr()
+                base.localAvatar.setPosHpr(pos, hpr)
+                battle.d_requestBattle(pos, hpr)
+            else:
+                pass
+    
+    def regenHealth(self):
+        self.enterRandomBattle()
+        finishSeq=Sequence(Wait(1),Func(mintAutoer.boardElevator))
+        checkSeq=Sequence(Wait(1))
+        checkSeq.append(Func(otherFunctions.checkFinish,"battle",checkSeq,finishSeq,"notFind"))
+        checkSeq.loop()
+            
+    def setStop(self):
+        self.checkDeadSeq.finish()
+        self.shouldContinue=False
+        base.localAvatar.setSystemMessage(1,"The Autoer will stop at the end of this run")
+    
+    def start(self):
+        self.checkDeadSeq.loop()
+        self.shouldContinue=True
+        self.checkCogbucks()
+        
+otherFunctions=OtherFunctions()
+
+class CFOautoer:
+    
+    def __init__(self):
+        self.auto=Sequence(Func(self.stealth), Wait(.1), Func(self.door), Wait(6.0),Func(self.elevator), Wait(38),Func(self.skipElevator), Wait(1), Func(self.skipIntro), Wait(11), Func(self.exploit),
+        Wait(.5), Func(self.walk), Wait(3), Func(self.skipTuto), Wait(3), Func(self.cfo), Wait(1), Func(self.skipFour), Wait(5), Func(self.walk), Wait(1),
+        Func(otherFunctions.teleBack),Wait(6),Func(otherFunctions.checkCogbucks))
+        
+        
+    def door(self):
+        if base.cr.doFind('DistributedCogHQDoor'):
+            base.cr.doFind('Door').sendUpdate('requestEnter')
+
+    def skipElevator(self):
+        if base.cr.doFind('C. F. O'):
+            base.cr.doFind('C. F. O')._DistributedBossCog__doneElevator()
+        else:
+            self.auto.finish()
+            otherFunctions.falseFlag=True
+            otherFunctions.prevBucks=base.localAvatar.cogMerits[2]
+            Sequence(Func(self.door),Wait(6),Func(mintAutoer.startMint)).start()
+
+    def elevator(self):
+        if base.cr.doFind('Elevator'):
+            base.cr.doFind('Elevator').sendUpdate('requestBoard')
+
+    def exploit(self):
+        base.cr.doFind('SafeZone').sendUpdate('enterSafeZone')
+
+    def walk(self):
+        try:
+            base.cr.playGame.getPlace().fsm.forceTransition('walk')
+        except:
+            pass
+
+    def skipIntro(self):
+        if base.cr.doFind('C. F. O'):
+            base.cr.doFind('C. F. O').exitIntroduction()
+
+    def skipTuto(self):
+        if base.cr.doFind('C. F. O'):
+            base.cr.doFind('C. F. O').exitPrepareBattleThree()
+
+    def skipFour(self):
+        if base.cr.doFind('C. F. O'):
+            base.cr.doFind('C. F. O').exitBattleFour()
+            
+                    
+    def cfo(self):
+        if base.cr.doFind('C. F. O'):
+            base.cr.doFind('C. F. O').cranes[0].sendUpdate('requestControl', [])
+            for goon in base.cr.doFindAll('goon'):
+                goon.sendUpdate('requestGrab', [])
+                goon.sendUpdate('clearSmoothing', [0])
+                goon.sendUpdate('hitBoss', [20.0])
+
+    def stealth(self):
+        base.localAvatar.d_setParent(1)
+       
+    def start(self):
+        if base.cr.doFind("DistributedCogHQDoor"):
+            mintAutoer.attackSeq.finish()
+            self.auto.start()
+        else:
+            otherFunctions.checkDead()
+cfoAuto=CFOautoer()
+
+class MintAutoer:
+    
+    def __init__(self):
+        self.tryCounter=0
+        self.shouldToonUp=False
+        self.battleRounds=0
+        self.attackSeq=Sequence(Func(otherFunctions.restock),Wait(1.0),Func(otherFunctions.attack),Wait(1.0))
+        self.finalRooms={0:17,
+                         1:23,
+                         2:21,
+                         3:19,
+                         4:17,
+                         5:23,
+                         6:21,
+                         7:19,
+                         8:17,
+                         9:23,
+                         10:21,
+                         11:19,
+                         12:17,
+                         13:24,
+                         14:21,
+                         15:19,
+                         16:17,
+                         17:24,
+                         18:21,
+                         19:19}
+                         
+    def boardElevator(self):
+        self.tryCounter+=1
+        if self.tryCounter>10:
+            self.tryCounter=0
+            Sequence(Func(otherFunctions.walk),Wait(0.5),Func(base.cr.playGame.getPlace().handleBookCloseTeleport,9000, 9000),Wait(6),Func(otherFunctions.checkDead)).start()
+            return
+        if base.localAvatar.getHp()>70:
+            self.tryCounter=0
+            for elevator in base.cr.doFindAll("Elevator"):
+                if "Bullion" in elevator.getDestName():
+                        elevator.sendUpdate("requestBoard")
+                        break
+        else:
+            Sequence(Func(otherFunctions.regenHealth)).start()
+        
+           
+    def goToFinalRoom(self):
+        if base.localAvatar.getHp()>0:
+            teleOutSeq=Sequence(Wait(1),Func(self.attackSeq.finish),Func(otherFunctions.walk),Wait(0.5),Func(self.endMint))
+            
+            if base.cr.doFind('mint'):
+                mint=bboard.get('mint')
+                Sequence(Wait(2),Func(mint.warpToRoom,self.finalRooms[mint.floorNum])).start()
+                if self.finalRooms[mint.floorNum]==17:
+                    checkSeq=Sequence(Wait(1))
+                    checkSeq.append(Func(otherFunctions.checkFinish,"battle",checkSeq,teleOutSeq,"notFind"))
+                    Sequence(Wait(4),Func(self.enterBattle,True),Func(checkSeq.loop)).start()
+                else:    
+                    checkSeq=Sequence(Wait(1))
+                    checkSeq.append(Func(otherFunctions.checkFinish,"battle",checkSeq,teleOutSeq,"notFind"))
+                    Sequence(Wait(3),Func(checkSeq.loop)).start()
+                
+            else:
+                otherFunctions.checkDead()
+   
+    def enterBattle(self,finalRoom=False):
+        if base.localAvatar.getHp()>0:
+            battles = []
+            cogList = base.cr.doFindAll("render")
+            for x in cogList:
+                if isinstance(x, DistributedMintSuit):
+                    if x.activeState == 6:
+                        if finalRoom:
+                            if x.getName()=='Skelecog' and x.getActualLevel()==12:
+                               battles.append(x)
+                        else:
+                            battles.append(x)
+                            
+            if battles != []:
+                battle=battles[0]
+                pos, hpr = battle.getPos(), battle.getHpr()
+                base.localAvatar.setPosHpr(pos, hpr)
+                battle.d_requestBattle(pos, hpr)
+                return True
+            else:
+                return False
+        else:
+            return False
+            
+    def endMint(self):
+        Sequence(Func(otherFunctions.teleBack),Wait(8),Func(otherFunctions.checkCogbucks)).start()
+    
+    def main(self):
+        self.count+=1
+        restartSeq=Sequence(Wait(1),Func(self.main)) 
+        if base.localAvatar.getHp()!=base.localAvatar.getMaxHp():
+            self.shouldToonUp=True
+        else:
+            self.shouldToonUp=False
+        if self.count<3 or base.localAvatar.getMaxHp()>114:    
+            if self.enterBattle():
+                checkSeq=Sequence(Wait(1))
+                checkSeq.append(Func(otherFunctions.checkFinish,"battle",checkSeq,restartSeq,"notFind"))
+                checkSeq.loop()
+            else:
+                self.endMint()
+        else:
+            self.goToFinalRoom()
+            
+
+    def startMint(self):
+        if base.cr.doFind('DistributedCogHQDoor'):
+            self.count=0
+            Sequence(Func(self.boardElevator)).start()
+            startSeq=Sequence(Wait(5),Func(self.main))
+            checkSeq=Sequence(Wait(1))
+            checkSeq.append(Func(otherFunctions.checkFinish,"mint",checkSeq,startSeq,"find"))
+            checkSeq.loop()
+        else:
+            otherFunctions.checkDead()
+            
+mintAutoer=MintAutoer()
+
+DirectButton(text = ("Start CFO Maxer", "START CFO MAXER", "start CFO maxer", "sTART CFO mAXER"), scale=.06, pos = (0,-0,-.6), command=otherFunctions.start)
+DirectButton(text = ("Stop CFO Maxer", "STOP CFO MAXER", "stop CFO maxer", "sTOP CFO mAXER"), scale=.06, pos = (0,-0,-.7), command=otherFunctions.setStop)
+base.localAvatar.setSystemMessage(1, 'No syntax errors!')
+
+if base.localAvatar.defaultShard not in emptyShardList:
+    base.localAvatar.book.pages[1].choseShard(random.choice(emptyShardList))

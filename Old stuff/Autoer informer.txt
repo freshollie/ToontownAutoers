@@ -1,0 +1,207 @@
+from direct.interval.IntervalGlobal import *
+from toontown.safezone import Playground
+from toontown.toon import ToonHead
+from toontown.toon import DistributedToon
+from toontown.building import DistributedDoor
+from toontown.safezone import DistributedPartyGate
+from toontown.safezone import DistributedTrolley
+from toontown.toon import DistributedNPCFisherman
+from toontown.toon import DistributedNPCPartyPerson
+ 
+oldTrolleyInit = DistributedTrolley.DistributedTrolley.__init__
+oldPartyInit = DistributedPartyGate.DistributedPartyGate.__init__
+oldDoorInit = DistributedDoor.DistributedDoor.__init__
+ 
+oldFisherAnnounceGenerate = DistributedNPCFisherman.DistributedNPCFisherman.announceGenerate
+def newFishermanAnnounceGenerate(self):
+    try:
+        oldFisherAnnounceGenerate(self)
+    except:
+        return None
+ 
+oldPartyPlannerAnnounceGenerate = DistributedNPCPartyPerson.DistributedNPCPartyPerson.announceGenerate
+def newPartyPlannerAnnounceGenerate(self):
+    try:
+        oldPartyPlannerAnnounceGenerate(self)
+    except:
+        return None
+ 
+def newInit(self, cr):
+    for obj in dir(self):
+        exec 'self.%s = lambda *x:None' % obj
+    return None
+ 
+base.localAvatar.findSomethingToLookAt = lambda *x:None
+ToonHead.ToonHead._ToonHead__lookAround = lambda *x:None
+DistributedTrolley.DistributedTrolley.__init__ = newInit
+DistributedPartyGate.DistributedPartyGate.__init__ = newInit
+DistributedDoor.DistributedDoor.__init__ = newInit
+
+class ToonupAnywhere:
+ 
+    def __init__(self):
+ 
+        DistributedNPCFisherman.DistributedNPCFisherman.announceGenerate = newFishermanAnnounceGenerate
+        DistributedNPCPartyPerson.DistributedNPCPartyPerson.announceGenerate = newPartyPlannerAnnounceGenerate
+        
+ 
+        self.noForeignToons = Sequence(Func(self.removeToons), Wait(0.5))
+ 
+    def removeToons(self):
+ 
+        for x in base.cr.doFindAll('Fisherman'):
+            try:
+                if x.zoneId != base.localAvatar.zoneId:
+                    x.removeNode()
+                    x.nametag.unmanage(base.marginManager)
+            except:
+                pass
+ 
+        for x in base.cr.doFindAll('Party Planner'):
+            try:
+                if x.zoneId != base.localAvatar.zoneId:
+                    x.removeNode()
+                    x.nametag.unmanage(base.marginManager)
+            except:
+                pass
+           
+        for x in base.cr.doFindAll('render/donald'):
+            try:
+                if x.zoneId != base.localAvatar.zoneId:
+                    x.removeNode()
+                    x.nametag.unmanage(base.marginManager)
+            except:
+                pass
+ 
+        for x in base.cr.doFindAll('render/minnie'):
+            try:
+                if x.zoneId != base.localAvatar.zoneId:
+                    x.removeNode()
+                    x.nametag.unmanage(base.marginManager)
+            except:
+                pass
+ 
+        for x in base.cr.doFindAll('render/mickey'):
+            try:
+                if x.zoneId != base.localAvatar.zoneId:
+                    x.removeNode()
+                    x.nametag.unmanage(base.marginManager)
+            except:
+                pass
+ 
+        for x in base.cr.doFindAll('render/pluto'):
+            try:
+                if x.zoneId != base.localAvatar.zoneId:
+                    x.removeNode()
+                    x.nametag.unmanage(base.marginManager)
+            except:
+                pass
+ 
+        for x in base.cr.doFindAll('render/daisy'):
+            try:
+                if x.zoneId != base.localAvatar.zoneId:
+                    x.removeNode()
+                    x.nametag.unmanage(base.marginManager)
+            except:
+                pass
+ 
+        for x in base.localAvatar.getNearbyPlayers(100000000000000, False):
+            try:
+                y = base.cr.doId2do.get(x)
+                if y.zoneId != base.localAvatar.zoneId:
+                    y.removeNode()
+                    y.nametag.unmanage(base.marginManager)
+            except:
+                pass
+ 
+        for x in base.cr.doFindAll('Butterfly'):
+            x.butterflyNode.remove()
+ 
+        for x in base.cr.doFindAll('Flower'):
+            x.bigFlower.removeNode()
+ 
+        for x in base.cr.doFindAll('Treasure'):
+            x.setPosition(0, 0, 8**8)
+ 
+        for x in base.cr.doFindAll('render/DistributedFishingTarget'):
+            x.bubbles.removeNode()
+            x.removeNode()
+ 
+    def unloadAll(self):
+ 
+        self.noForeignToons.finish()
+ 
+        Sequence(Func(base.cr.removeInterest, self.TTCToonup), Wait(0.2),
+                 Func(base.cr.removeInterest, self.DGToonup), Wait(0.2),
+                 Func(base.cr.removeInterest, self.MMLToonup), Wait(0.2),
+                 Func(base.cr.removeInterest, self.TBToonup), Wait(0.2),
+                 Func(base.cr.removeInterest, self.DDLToonup)).start()
+ 
+    def loadAll(self):
+        base.localAvatar.stopLookAroundNow()
+ 
+        def TTC():
+            self.TTCToonup = base.cr.addInterest(base.localAvatar.defaultShard, 2000, 5, None)
+        def DG():
+            self.DGToonup = base.cr.addInterest(base.localAvatar.defaultShard, 5000, 5, None)
+        def MML():
+            self.MMLToonup = base.cr.addInterest(base.localAvatar.defaultShard, 4000, 5, None)
+        def TB():
+            self.TBToonup = base.cr.addInterest(base.localAvatar.defaultShard, 3000, 5, None)
+        def DDL():
+            self.DDLToonup = base.cr.addInterest(base.localAvatar.defaultShard, 9000, 5, None)
+           
+        Sequence(Func(TTC), Wait(.1),
+                 Func(DG), Wait(.1),
+                 Func(MML), Wait(.1),
+                 Func(TB), Wait(.1),
+                 Func(DDL)).start()
+ 
+        self.noForeignToons.loop()
+
+class Informer:
+    oldTeleportInPlayground=Playground.Playground.exitTeleportIn
+    def __init__(self):
+        Playground.Playground.exitTeleportIn=lambda newSelf,*args,**kwds: self.newTeleportInPlayground(newSelf,*args,**kwds)
+        self.playgroundLoader=ToonupAnywhere()
+        self.shards=[]
+        for shard in base.cr.activeDistrictMap:
+            if base.cr.activeDistrictMap[shard].avatarCount>30:
+                self.shards.append(shard)
+    
+    def newTeleportInPlayground(self,newSelf,*args,**kwds):
+        self.oldTeleportInPlayground(newSelf,*args,**kwds)
+        self.load()
+    
+    def load(self):
+        Sequence(Func(self.playgroundLoader.loadAll),Wait(2),Func(self.whisperAll)).start()
+    
+    def unload(self):
+        Sequence(Func(self.playgroundLoader.unloadAll),Wait(2),Func(self.nextDistrict)).start()
+    
+    def whisperPlayer(self,avId):
+        base.talkAssistant.sendWhisperTalk(self.message,avId)
+        print avId
+    
+    def whisperAll(self):
+        whisperSeq=Sequence()
+        for toon in base.cr.doFindAllInstances(DistributedToon.DistributedToon):
+            whisperSeq.append(Func(self.whisperPlayer,toon.doId))
+            whisperSeq.append(Wait(0.05))
+        whisperSeq.append(Func(self.unload))
+        whisperSeq.start()
+    
+    def nextDistrict(self):
+        base.localAvatar.shardPage.choseShard(self.shards[0])
+        self.shards.append(self.shards[0])
+        del self.shards[0]
+    
+    def setMessage(self,message):
+        self.message=message
+        
+    def start(self):
+        Sequence(Wait(5),Func(self.load)).start()
+        
+informer=Informer()
+informer.setMessage('This is a big long test')
+informer.start()

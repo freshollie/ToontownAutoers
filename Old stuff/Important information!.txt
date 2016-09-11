@@ -1,0 +1,67 @@
+CogDisguiseGlobals.isPaidSuitComplete(self,self.getCogParts(),index)
+toontown.coghq.CogDisguiseGlobals.isPaidSuitComplete(base.localAvatar,base.localAvatar.getCogParts(),3)
+
+NAME
+    toontown.coghq.CogDisguiseGlobals
+
+FILE
+    c:\program files (x86)\disney\disney online\toontownonline\<frozen>
+
+FUNCTIONS
+    asBitstring(number)
+    
+    asNumber(bitstring)
+    
+    dept2deptIndex(dept)
+    
+    getNextPart(parts, partIndex, dept)
+    
+    getPartName(partArray)
+    
+    getTotalMerits(toon, index)
+    
+    getTotalParts(bitString, shiftWidth=32)
+    
+    isPaidSuitComplete(av, parts, dept)
+    
+    isSuitComplete(parts, dept)
+
+DATA
+    AllBits = 131071
+    MaxPartLoss = 4
+    MeritsPerLevel = ((100, 130, 160, 190, 800), (160, 210, 260, 310, 1300...
+    MinPartLoss = 2
+    PartNameStrings = ('Upper Left Leg', 'Lower Left Leg', 'Left Foot', 'U...
+    PartsPerSuit = (17, 14, 12, 10)
+    PartsPerSuitBitmasks = (131071, 130175, 56447, 56411)
+    PartsQueryMasks = (7, 56, 1984, 14336, 114688)
+    PartsQueryNames = ({1: 'Upper Left Leg', 2: 'Lower Left Leg', 4: 'Left...
+    PartsQueryShifts = (1, 8, 64, 2048, 16384)
+    SimplePartNameStrings = ('Upper Torso',)
+    leftArmHand = 8192
+    leftArmIndex = 3
+    leftArmLower = 4096
+    leftArmUpper = 2048
+    leftLegFoot = 4
+    leftLegIndex = 0
+    leftLegLower = 2
+    leftLegUpper = 1
+    rightArmHand = 65536
+    rightArmIndex = 4
+    rightArmLower = 32768
+    rightArmUpper = 16384
+    rightLegFoot = 32
+    rightLegIndex = 1
+    rightLegLower = 16
+    rightLegUpper = 8
+    suitTypes = <direct.showbase.PythonUtil.Enum instance>
+    torsoChest = 256
+    torsoHealthMeter = 512
+    torsoIndex = 2
+    torsoLeftShoulder = 64
+    torsoPelvis = 1024
+    torsoRightShoulder = 128
+    upperTorso = 64
+
+
+None

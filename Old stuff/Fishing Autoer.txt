@@ -1,0 +1,79 @@
+from direct.interval.IntervalGlobal import *
+
+class FishingAutoer:
+
+    def __init__(self):
+        self.shouldStop=False
+        self.shouldContinue=False
+        self.autoerGui=AutoerGui('Fish Autoer',['Run Time','Number of JBs','JBs/Hour','Fish Collection','Fish/Hour'],\
+                                 ['self.hours+":"+self.minutes+":"+self.seconds','str(fishingAutoer.getJbsMade())',\
+                                 'str(self.workOutNumberAnHour(fishingAutoer.getJbsMade()))',\
+                                 'str(len(base.localAvatar.fishCollection.getFish()))',\
+                                 'str(self.workOutNumberAnHour(fishingAutoer.fishNum))'],\
+                                 'AUTO FISH',None)
+        
+    def catch(self):
+        if self.shouldContinue:
+           # try:
+            fish = base.cr.doFindAll("FishingTarget")[0]
+            for fp in base.cr.doFindAll("FishingPond"):
+                fp.d_hitTarget(fish)
+                self.fishNum+=1
+            #except:
+                #self.setStop()
+               # self.autoerGui.display.newLine("Not at fishing spot")
+            
+    def catchFish(self):
+        if self.shouldContinue:
+            catchFishSeq=Sequence()
+            for i in range(23):
+                catchFishSeq.append(Func(self.catch))
+                catchFishSeq.append(Wait(0.05))
+            catchFishSeq.append(Wait(1))
+            catchFishSeq.append(Func(self.sell))
+            catchFishSeq.start()
+    
+    def getJbsMade(self):
+        return base.localAvatar.getTotalMoney()-self.startJbs
+    
+    def reachedMaxJB(self):
+        base.localAvatar.setSystemMessage(0,'You have reached the maximum jelly beans, you can continue using the Fishing Autoer to get fish by setting it up in the options')
+        self.autoerGui.display.newLine("Max JB's reached")
+        self.setStop()
+            
+    def sell(self):
+        if self.shouldContinue and base.cr.doFind('Fisherman'):
+            base.cr.doFind('Fisherman').sendUpdate('avatarEnter')
+            base.cr.doFind('Fisherman').sendUpdate('completeSale',[1])
+            if self.shouldContinue:
+                if self.shouldStop and base.localAvatar.getTotalMoney()>=12000:
+                    self.reachedMaxJB()
+                else:
+                    Sequence(Wait(1),Func(self.catchFish)).start()
+    
+    def getMoney(self):
+        return base.localAvatar.getTotalMoney()
+    
+    def stopOnMax(self):
+        self.shouldStop=True
+        base.localAvatar.setSystemMessage(0,'Fishing Autoer: Autoer will stop at max jelly beans')
+    
+    def continueFishing(self):
+        self.shouldStop=False
+        base.localAvatar.setSystemMessage(0,'Fishing Autoer: Autoer will continue to fish even at max jelly beans')
+        
+    def start(self):
+        self.shouldContinue=True
+        self.startJbs=base.localAvatar.getTotalMoney()
+        self.fishNum=0
+        self.autoerGui.startTimer()
+        self.catchFish()
+    
+    def setStop(self):
+        self.autoerGui.stopTimer()
+        self.autoerGui.display.newLine("Stopped")
+        self.shouldContinue=False
+    
+    def revertFunctions(self):
+        self.autoerGui.destroy()
+fishingAutoer=FishingAutoer()

@@ -1,0 +1,44 @@
+#CJ Autoer was made by youtube.com/mrthechunkey and youtube.com/toontowninjecting
+
+from direct.gui.DirectGui import *
+from direct.interval.IntervalGlobal import *
+from toontown.ai import ToontownMagicWordManager
+ToontownMagicWordManager.ToontownMagicWordManager.d_setMagicWord = lambda *x:None
+base.cr.wantMagicWords = 'YES' # activate the MagicWordManager
+def Door():
+    base.cr.doFind('Door').sendUpdate('requestEnter')
+	
+def Elevator():
+    base.cr.doFind('Elevator').sendUpdate('requestBoard')
+	
+	
+def skipIntroduction():
+    if base.cr.doFind('Lawbot):   
+        base.cr.doFind('Lawbot').exitIntroduction()
+		
+def skipBattleOne():
+    if base.cr.doFind('Lawbot'): 
+        base.cr.doFind('Lawbot').exitBattleOne()		
+		
+def skipBattleTwo():
+    if base.cr.doFind('Lawbot'): 
+        base.cr.doFind('Lawbot').exitBattleTwo()	
+
+def Kill():
+    def CJ1():    
+   CJ = base.cr.doFind('Chief Justice')
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+   CJ.sendUpdate ('hitBoss', [100])
+
+ 
+  
+ 
+        

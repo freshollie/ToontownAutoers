@@ -1,0 +1,41 @@
+script={
+
+    'name':'VP Maxer',\
+    
+    'description':"The VP maxer is a script used to max the VP. \
+It does the factory when you need merits and does the \
+vp when you are ready to do the vp. The card filter can be \
+turned on and off in the options. Full credit to the functions \
+that were not created by me can be found on my channel: \
+toontowninjecting.",\
+                   
+    'author': 'Freshollie',\
+    
+    'version': '1',\
+    
+    'unload':'vpMaxer.revert()',\
+    
+    'start':'vpMaxer.otherFunctions.start()',\
+    
+    'stop':'vpMaxer.otherFunctions.setStop()',\
+    
+    'options':{
+        'Card Filter On':{
+            'command':'vpMaxer.vpAutoer.filterOn',\
+            'pos':(0,0)\
+            },
+            
+        'Card Filter Off':{
+            'command':'vpMaxer.vpAutoer.filterOff',\
+            'pos':(0,1)
+            }  
+        },\
+    '''
+    'text':{
+        'Test Text1':(1,0),\
+        'Test Text2':(1,1)
+        },\
+    '''   
+    'location':'http://dl.dropboxusercontent.com/s/5g552180f7zkld3/Better%20VP%20maxer.txt?token_hash=AAFq4vIEio1qbsfo8Trt4J8kl2eGdxSaA4sIHElfh5yrYw&dl=1'}
+
+toonBot.addScript(script)

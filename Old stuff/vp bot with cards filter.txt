@@ -1,0 +1,582 @@
+############################################
+# Toontown V.P. Maxer                      #
+#                                          #
+#    - This Vp Maxer will do a factory     #
+#      if you do not have enough merits    #
+#      and a vp if you have enough         #
+#      merits, it will repeat this until   #
+#      you are maxed and if you are maxed  #
+#      it will continue to do vp's over    #
+#      and over until it is stopped        #
+#      (Closing the client).               #
+#                                          #
+#    - This Vp Maxer contains a card       #
+#      filter which will only do a vp if   #
+#      the card is worth it. I also have   #
+#      a vp maxer which will do any vp     #
+#      which will in the end max your      #
+#      suit much faster.                   # 
+#                                          #
+#    - For people learning to program      #
+#      (Which I highly encourage) a fully  #
+#      commented version of this is        #
+#      availible on my channel which       #
+#      explains every function in detail.  #
+#      (youtube.com/toontowninjecting)     #
+#                                          #
+# Created by freshollie(toontownInjecting) #
+# Created using King Lefty's Boss exploit  #
+# Created 3rd March 2013                   #
+# Demoed by youtube.com/mrthechunkey       #
+# Updated 18th May 2013 (With card Filter) #
+############################################
+
+############################################
+# Instructions for running                 #
+#                                          #
+#    - Inject everything here at either    #
+#      daisys gardens or sellbot hq.       # 
+#                                          #
+#    - To stop the code just close         # 
+#      toontown as I can't be bothered     #
+#      to implement a stop feature.        #
+#                                          #
+#    - The chances of ban are increased    #
+#      on a weekday when running this      #
+#      as the toontown staff are in        #
+#      office so if you have put lots of   #
+#      time into your account run this     #
+#      on weekends.                        #
+############################################
+
+import toontown
+from direct.interval.IntervalGlobal import *
+from toontown.coghq import DistributedBattleFactory
+from toontown.coghq import DistributedDoorEntity
+from toontown.suit.DistributedSuit import DistributedSuit
+from direct.distributed import DistributedObject
+toontown.toonbase.ToontownBattleGlobals.SkipMovie=1
+
+try:
+    oldEnter
+except:
+    oldEnter=toontown.toon.HealthForceAcknowledge.HealthForceAcknowledge.enter
+def newHook(self,hplevel):
+    try:
+        oldEnter(self,hplevel)
+        self.handleOk(base.localAvatar.getHp())
+        self.exit()
+    except:
+        pass
+toontown.toon.HealthForceAcknowledge.HealthForceAcknowledge.enter=newHook
+
+try:
+    oldSendUpdate
+except:
+    oldSendUpdate=DistributedObject.DistributedObject.sendUpdate
+def sendUpdateHook(self, fieldName, args=[], sendToId=None):
+    if fieldName=="requestAttack":
+        oldSendUpdate(self,"requestAttack", args, sendToId)
+        oldSendUpdate(self,"movieDone",[])
+        self.d_rewardDone(base.localAvatar.doId)
+    else:
+        oldSendUpdate(self,fieldName, args, sendToId)
+DistributedObject.DistributedObject.sendUpdate=sendUpdateHook
+
+
+
+_sendUpdate = DistributedDoorEntity.DistributedDoorEntity.sendUpdate
+def sendUpdate_1(self, fieldName, args=[], sendToId=None):
+    if fieldName == 'requestOpen':
+        self.setDoorState(1, 0) # Enter the first state so we can receive the second.
+        self.setDoorState(2, 0) # Open the door on the client.
+        DistributedDoorEntity.DistributedDoorEntity.sendUpdate = sendUpdate_2
+    else: # Send the update message to the server for interpretation.
+        _sendUpdate(self, fieldName, args, sendToId)
+def sendUpdate_2(self, fieldName, args=[], sendToId=None):
+    if fieldName == 'requestOpen':
+        self.setDoorState(1, 0) # Enter the first state so we can receive the second.
+        self.setDoorState(2, 0) # Open the door on the client.
+        DistributedDoorEntity.DistributedDoorEntity.sendUpdate = sendUpdate_3
+    else: # Send the update message to the server for interpretation.
+        _sendUpdate(self, fieldName, args, sendToId)
+        
+def sendUpdate_3(self, fieldName, args=[], sendToId=None):
+    if fieldName == 'requestOpen':
+        self.setDoorState(2, 0) # Open the door on the client.
+    else: # Send the update message to the server for interpretation.
+         _sendUpdate(self, fieldName, args, sendToId)
+DistributedDoorEntity.DistributedDoorEntity.sendUpdate = sendUpdate_1
+
+faceOffHook = lambda self, ts, name, callback:self.d_faceOffDone(self)
+DistributedBattleFactory.DistributedBattleFactory._DistributedLevelBattle__faceOff = faceOffHook
+
+class OtherFunctions:
+
+    def __init__(self):
+        self.firstTrack=2
+        self.secondTrack=0
+        self.thirdTrack=4
+        self.desiredLevel1=5
+        self.desiredLevel2=4
+        self.desiredLevel3=5
+        self.createInventory()
+        self.cogMerits={1:[20]\
+                       ,2:[30,40]\
+                       ,3:[40,50,60]\
+                       ,4:[50,60,80,100]\
+                       ,5:[200,70,100,130,160]\
+                       ,6:[300,120,160,210,260]\
+                       ,7:[500,190,260,340,420]\
+                       ,8:[550,420,310,800,680]\
+                       ,9:[680,500,1300,890]\
+                       ,10:[2100,810,1100]
+                       ,11:[3400,1310]\
+                       ,12:[5500]\
+                       ,13:[680]\
+                       ,14:[5500]\
+                       ,15:[680]\
+                       ,16:[890]\
+                       ,17:[1100]\
+                       ,18:[1310]\
+                       ,19:[5500]\
+                       ,20:[680]\
+                       ,21:[890]\
+                       ,22:[1100]\
+                       ,23:[1310]\
+                       ,24:[1520]\
+                       ,25:[1730]\
+                       ,26:[1940]\
+                       ,27:[2150]\
+                       ,28:[2360]\
+                       ,29:[5500]\
+                       ,30:[680]\
+                       ,31:[890]\
+                       ,32:[1100]\
+                       ,33:[1310]\
+                       ,34:[1520]\
+                       ,35:[1730]\
+                       ,36:[1940]\
+                       ,37:[2150]\
+                       ,38:[2360]\
+                       ,39:[5500]\
+                       ,40:[680]\
+                       ,41:[890]\
+                       ,42:[1100]\
+                       ,43:[1310]\
+                       ,44:[1520]\
+                       ,45:[1730]\
+                       ,46:[1940]\
+                       ,47:[2150]\
+                       ,48:[2360]\
+                       ,49:[5500]\
+                       ,50:[0]} 
+        __builtins__.gagshop_zoneId = 4503
+
+    def createInventory(self):
+        self.desiredInv=""
+        if self.desiredLevel1==6:
+            self.desiredLevel1=5
+            
+        if self.desiredLevel2==6:
+            self.desiredLevel2=5
+            
+        for i in range(49):
+            if i==((self.firstTrack*7)+self.desiredLevel1):
+                if self.firstTrack==1:
+                    self.desiredInv+="\x02"
+                elif self.desiredLevel1>3:
+                    self.desiredInv+="\x02"
+                else:
+                    self.desiredInv+="\x04"
+            elif i==((self.secondTrack*7)+self.desiredLevel2):
+                if self.secondTrack==1:
+                    self.desiredInv+="\x02"
+                elif self.desiredLevel2>3:
+                    self.desiredInv+="\x02"
+                else:
+                    self.desiredInv+="\x04"
+            elif i==((self.thirdTrack*7)+self.desiredLevel3):
+                if self.thirdTrack==1:
+                    self.desiredInv+="\x02"
+                elif self.desiredLevel3>3:
+                    self.desiredInv+="\x02"
+                else:
+                    self.desiredInv+="\x04"
+            else:
+                self.desiredInv+="\x00"
+
+     
+    def loadGagshop(self):           
+        if not base.cr.doFind('Clerk'):
+            __builtins__.contextId = base.cr.addInterest(base.localAvatar.defaultShard, __builtins__.gagshop_zoneId, 4, event=None)
+        try:
+            if not int(render.find('**/*gagShop_interior_english*').getZ()) == 8**8:
+                render.find('**/*gagShop_interior_english*').setZ(8**8)
+                for k in base.cr.doFindAll('Clerk'):
+                    k.freeAvatar = lambda *x:None
+                    k.nametag.unmanage(base.marginManager)
+        except:
+            pass
+            
+    def buyGags(self):
+        firstTrack=2
+        secondTrack=4
+        thirdTrack=0
+        
+        desiredLevel1=5
+        desiredLevel2=5
+        desiredLevel3=4
+        desiredInv=self.desiredInv
+        try:
+            maxCarryGags = base.localAvatar.getMaxCarry()     
+            if base.cr.doFindAll('Clerk'):
+                num_gags = 0
+                for inventory_number in base.localAvatar.inventory.makeFromNetString(desiredInv):
+                    for k in inventory_number[:-1]:
+                        num_gags += k
+                for clerk in base.cr.doFindAll('Clerk'):
+                    change = (base.localAvatar.getMoney() - num_gags)
+                    oldString = base.localAvatar.inventory.makeNetString()
+                    newString = desiredInv[:6] + oldString[6] + desiredInv[7:13] + oldString[13] + desiredInv[14:20] + oldString[20] + desiredInv[21:27] + oldString[27] + desiredInv[28:34] + oldString[34] + desiredInv[35:48] + oldString[48]
+                    clerk.sendUpdate('setInventory', [newString, change, 1])
+                money = base.localAvatar.getMoney()
+                maxMoney = base.localAvatar.getMaxMoney()
+                base.cr.bankManager.d_transferMoney(money - maxMoney)
+        except:
+            pass
+    
+    def unloadGagshop(self):
+        if hasattr(__builtins__, 'contextId'):
+            try:
+                base.cr.removeInterest(__builtins__.contextId)
+            except:
+                pass
+        
+    def restock(self):
+        firstTrack=2
+        secondTrack=4
+        thirdTrack=0
+        
+        desiredLevel1=5
+        desiredLevel2=5
+        desiredLevel3=4
+        if base.localAvatar.inventory.inventory[firstTrack][desiredLevel1]<2 or base.localAvatar.inventory.inventory[secondTrack][desiredLevel2]<2:
+            Sequence(Func(self.loadGagshop),Wait(0.5),Func(self.buyGags),Wait(1),Func(self.unloadGagshop)).start()
+
+    def attack(self):
+        try:
+            for battle in base.cr.doFindAll('battle'):
+                battle.sendUpdate('requestAttack', [self.firstTrack, self.desiredLevel1, battle.suits[0].doId])
+                battle.sendUpdate('requestAttack', [self.secondTrack, self.desiredLevel2, base.localAvatar.doId])
+                battle.sendUpdate('requestAttack', [self.thirdTrack, self.desiredLevel3, battle.suits[0].doId])
+                battle.sendUpdate('requestAttack', [self.secondTrack, self.desiredLevel2, base.localAvatar.doId])
+        except:
+            pass
+        
+    def checkMerits(self):
+        if self.haveJb():
+            if self.shouldContinue:
+                if base.localAvatar.cogMerits[2] in self.cogMerits[base.localAvatar.cogLevels[2]+1] and not overRide:
+                    vpAuto.startVP()
+                else:
+                    factoryAuto.goFactory()
+            else:
+                base.localAvatar.setSystemMessage(1,"Thanks for using freshollie's VP maxer")
+        else:
+            base.localAvatar.setSystemMessage(0,"You don't have any jellybeans, go use freshollie's fishing code")
+         
+
+    def getTreasure(self):
+        for treasure in base.cr.doFindAll("Treasure"):
+            treasure.d_requestGrab()
+            
+    def teleHQ(self):
+        try:
+            base.cr.playGame.getPlace().handleBookCloseTeleport(11000, 11000)
+        except:
+            pass
+        
+    def checkDead(self):
+        if not base.cr.doFind('V. P') and not base.cr.doFind("DistributedSellbotHQDoor") and base.cr.doFind("daisy"):
+            self.restock()
+            self.getTreasure()
+            self.walk()
+            Sequence(Wait(0.5),Func(self.teleBack,11000),Wait(10),Func(self.checkMerits)).start()
+            
+    def walk(self):
+        try:
+            base.cr.playGame.getPlace().fsm.forceTransition('walk')
+        except:
+            pass
+            
+    def checkFinish(self,check,sequence,nextSeq,args):
+        if args=="notFind":
+            if base.cr.doFindAll(check)==[]:
+                sequence.finish()
+                nextSeq.start()
+        elif args=="find":
+            if base.cr.doFindAll(check)!=[]:
+                sequence.finish()
+                nextSeq.start()
+                
+    def goHome(self):
+        base.localAvatar._LocalToon__handleClarabelleButton()
+        
+    def haveJb(self):
+        if base.localAvatar.cogLevels[3]==49:
+            return True
+        elif base.localAvatar.getMoney()==0:
+            return False
+        else:
+            return True
+
+    def teleBack(self,zone):
+        try:
+            base.cr.playGame.getPlace().handleBookCloseTeleport(zone, zone)
+        except:
+            pass
+    
+    def setStop(self):
+        self.shouldContinue=False
+        base.localAvatar.setSystemMessage(1,"The Maxer will stop at the end of this run")
+    
+    def start(self):
+        self.shouldContinue=True
+        self.checkMerits()
+        
+otherFunctions=OtherFunctions()
+
+class VpAuto:
+    
+    def __init__(self):
+        self.battle2=Sequence(Wait(1.0),Func(self.skipBattleRoll),Wait(40),Func(self.exploit),Wait(34),Func(self.endBattle),Wait(10),Func(self.backToPlayground),Wait(6),Func(otherFunctions.checkMerits))
+        self.battle1=Sequence(Func(self.skipIntro),Wait(9),Func(self.exploit),Func(self.battle2.start))
+        
+        self.elevSeq=Sequence(Wait(8),Func(self.skipElevator),Func(self.cardFilter))
+        
+        self.boardElevator=Sequence(Wait(2),Func(self.boardVpElevator),Wait(30),Func(self.elevSeq.start))
+        self.boardElevator.append(Func(self.boardElevator.finish))
+        
+        self.lobbySeq=Sequence()
+        self.lobbySeq.append(Func(otherFunctions.checkFinish,"Elevator",self.lobbySeq,self.boardElevator,"find"))
+        self.lobbySeq.append(Wait(1.5))
+        
+        self.backToPlaygroundSeq=Sequence(Func(otherFunctions.walk),Wait(0.3),Func(otherFunctions.teleHQ))
+        
+        self.exploitSeq=Sequence(Func(self.destroyBattle), Wait(.5), Func(otherFunctions.walk))
+        
+        self.cardsWanted=['Flippy','Barnacle Bessie','Lil Oldman','Professor Pete','Stinky Ned','Daffy Don','Moe Zart','Sid Sonata','Franz Neckvein']
+
+    def boardVpElevator(self):
+        base.cr.doFindAll("Elevator")[0].sendUpdate("requestBoard")
+
+    def enterLobby(self):
+        base.cr.doFindAll('Door')[0].sendUpdate('requestEnter')
+
+    def destroyBattle(self):
+        base.cr.doFind('SafeZone').sendUpdate('enterSafeZone')
+
+    def exploit(self):
+        self.exploitSeq.start()
+        
+    def endBattle(self):
+        if base.cr.doFind('V. P'):
+            base.cr.doFind('V. P').sendUpdate('hitBossInsides')
+            base.cr.doFind('V. P').sendUpdate('hitBoss', [100])
+            base.cr.doFind('V. P').sendUpdate('finalPieSplat', [])
+            
+    def skipElevator(self):
+        if not base.cr.doFind('V. P'):
+            if base.cr.doFindAll("Elevator"):
+                Sequence(Wait(3.0),Func(self.lobbySeq.start)).start()
+            else:
+                Sequence(Wait(3.0),Func(otherFunctions.checkMerits)).start()
+        else:
+            base.cr.doFind('V. P')._DistributedBossCog__doneElevator()
+        
+    def skipIntro(self):
+        if base.cr.doFind('V. P'):
+            base.cr.doFind('V. P').exitIntroduction()
+        
+    def skipBattleRoll(self):
+        if base.cr.doFind('V. P'):
+            base.cr.doFind('V. P').exitRollToBattleTwo()
+        
+    def backToPlayground(self):
+        self.backToPlaygroundSeq.start()
+
+    def startVP(self):
+        if base.cr.doFind("DistributedSellbotHQDoor"):
+            self.enterLobby()
+            self.lobbySeq.loop()
+        else:
+            otherFunctions.checkDead()
+    
+    def cardFilter(self):
+    
+        ''' Function based off the original written by chrome (I think)
+            this function was mostly not written by me and was
+            implemented because people complained that it didn't filter
+            for cards
+        '''
+        
+        if base.cr.doFind('V. P').cagedToon.getName() in self.cardsWanted:
+            Sequence(Wait(0.5),Func(self.battle1.start)).start()
+        else:
+            Sequence(Wait(0.5),Func(self.backToPlayground),Wait(6),Func(otherFunctions.checkMerits)).start()
+            
+vpAuto=VpAuto()
+
+class FactoryAuto:
+    def __init__(self):
+        self.attackSeq=Sequence(Func(otherFunctions.restock),Wait(1.0),Func(otherFunctions.attack),Wait(1.0))
+ 
+        self.endingSeq=Sequence(Func(self.attackSeq.pause),Func(otherFunctions.walk),Wait(3),Func(otherFunctions.teleHQ),Wait(7),Func(otherFunctions.checkMerits))
+        
+        self.endBattle=Sequence()
+        self.endBattle.append(Func(otherFunctions.checkFinish,"battle",self.endBattle,self.endingSeq,"notFind"))
+        self.endBattle.append(Wait(1.5))
+        
+        self.endSeq=Sequence(Func(self.attackSeq.pause),Func(self.factoryRoom7),\
+        Wait(2),Func(self.endBattle.loop),Func(self.attackSeq.loop))
+        
+        self.westBattle=Sequence()
+        self.westBattle.append(Func(otherFunctions.checkFinish,"battle",self.westBattle,self.endSeq,"notFind"))
+        self.westBattle.append(Wait(1.5))
+        
+        self.westSeq=Sequence(Func(self.attackSeq.pause),Func(self.factoryRoom6),\
+                         Wait(2),Func(self.westBattle.loop),Func(self.attackSeq.loop))
+        
+        self.eastBattle=Sequence()
+        self.eastBattle.append(Func(otherFunctions.checkFinish,"battle",self.eastBattle,self.westSeq,"notFind"))
+        self.eastBattle.append(Wait(1.5))
+        
+        self.eastSeq=Sequence(Func(self.attackSeq.pause),Func(self.factoryRoom5),\
+                         Wait(2),Func(self.eastBattle.loop),Func(self.attackSeq.loop))
+        
+        self.warehouseBattle=Sequence()
+        self.warehouseBattle.append(Func(otherFunctions.checkFinish,"battle",self.warehouseBattle,self.eastSeq,"notFind"))
+        self.warehouseBattle.append(Wait(1.5))
+        
+        self.warehouseSeq=Sequence(Func(self.attackSeq.pause),Func(self.factoryRoom4),Wait(0.5),\
+                              Func(base.localAvatar.setPos,6.45225, 427.952, 43.763),Wait(1),\
+                              Func(self.warehouseBattle.loop),Func(self.attackSeq.loop))
+        
+        self.oilBattle=Sequence()
+        self.oilBattle.append(Func(otherFunctions.checkFinish,"battle",self.oilBattle,self.warehouseSeq,"notFind"))
+        self.oilBattle.append(Wait(1.5))
+        
+        
+        self.oilSeq=Sequence(Func(self.attackSeq.pause),Func(self.factoryRoom3),\
+                        Wait(2),Func(self.oilBattle.loop),Func(self.attackSeq.loop))
+        
+        self.r2Battle2=Sequence()
+        self.r2Battle2.append(Func(otherFunctions.checkFinish,"battle",self.r2Battle2,self.oilSeq,"notFind"))
+        self.r2Battle2.append(Wait(1.5))
+        
+        self.r2Seq2=Sequence(Func(self.attackSeq.pause),Func(base.localAvatar.setPos,-313.689, 333.78, 18.726)\
+                        ,Wait(0.5),Func(self.enterBattle),Wait(3),Func(self.r2Battle2.loop),Func(self.attackSeq.loop))
+        
+        self.r2Battle1=Sequence()
+        self.r2Battle1.append(Func(otherFunctions.checkFinish,"battle",self.r2Battle1,self.r2Seq2,"notFind"))
+        self.r2Battle1.append(Wait(1.5))
+        
+        self.r2Seq=Sequence(Func(self.attackSeq.pause),Func(self.factoryRoom2),Wait(2),\
+                       Func(base.localAvatar.setPos,-303.77, 405.189, 18.726),Wait(3),\
+                       Func(self.r2Battle1.loop),Func(self.attackSeq.loop))
+        
+        self.boilerBattle=Sequence()
+        self.boilerBattle.append(Func(otherFunctions.checkFinish,"battle",self.boilerBattle,self.r2Seq,"notFind"))
+        self.boilerBattle.append(Wait(1.5))
+        
+        self.boilerSeq=Sequence(Func(self.attackSeq.pause),Func(self.factoryRoom1),Wait(2),\
+                           Func(base.localAvatar.setPos, -111.376, 306.009, 18.751),Wait(1),\
+                           Func(self.boilerBattle.loop),Func(self.attackSeq.loop))
+        
+        self.lobbyBattle=Sequence()
+        self.lobbyBattle.append(Func(otherFunctions.checkFinish,"battle",self.lobbyBattle,self.boilerSeq,"notFind"))
+        self.lobbyBattle.append(Wait(1.5))
+        
+        self.lobbySeq=Sequence(Wait(2),Func(base.localAvatar.setPos, 20.0564, 63.5509, 3.75101),Wait(1),\
+                               Func(base.localAvatar.setPos, 22.3467, 153.679, 3.75101),Wait(1),\
+                               Func(self.lobbyBattle.loop),Func(self.attackSeq.loop))
+        
+        self.elevSeq=Sequence()
+        self.elevSeq.append(Func(otherFunctions.checkFinish,"coghq.DistributedDoorEntity.DistributedDoorEntity",self.elevSeq,self.lobbySeq,"find"))
+        self.elevSeq.append(Wait(1.5))
+                
+    def enterBattle(self):
+        if base.cr.doFindAll('battle')==[]:
+            battles = []
+            cogList = base.cr.doFindAll("render")
+            for x in cogList:
+                if isinstance(x, DistributedSuit):
+                    if x.activeState == 6:
+                        battles.append(x)
+            try:
+                if battles != []:
+                    battle=battles[0]
+                    pos, hpr = battle.getPos(), battle.getHpr()
+                    base.localAvatar.setPosHpr(pos, hpr)
+                    battle.d_requestBattle(pos, hpr)
+            except:
+                return
+
+    def factoryRoom1(self):
+        for factory in base.cr.doFindAll('Factory'):
+            if hasattr(factory, 'warpToZone'):
+                factory.warpToZone(8)
+
+    def factoryRoom2(self):
+        for factory in base.cr.doFindAll('Factory'):
+            if hasattr(factory, 'warpToZone'):
+                factory.warpToZone(13)
+
+    def factoryRoom3(self):
+        for factory in base.cr.doFindAll('Factory'):
+            if hasattr(factory, 'warpToZone'):
+                factory.warpToZone(22)
+
+    def factoryRoom4(self):
+        for factory in base.cr.doFindAll('Factory'):
+            if hasattr(factory, 'warpToZone'):
+                factory.warpToZone(24)
+
+    def factoryRoom5(self):
+        for factory in base.cr.doFindAll('Factory'):
+            if hasattr(factory, 'warpToZone'):
+                factory.warpToZone(34)
+
+
+    def factoryRoom6(self):
+        for factory in base.cr.doFindAll('Factory'):
+            if hasattr(factory, 'warpToZone'):
+                factory.warpToZone(33)
+
+    def factoryRoom7(self):
+        for factory in base.cr.doFindAll('Factory'):
+            if hasattr(factory, 'warpToZone'):
+                factory.warpToZone(32)
+                
+    def goFactory(self):
+        if base.cr.doFind("DistributedSellbotHQDoor"):
+            Sequence(Func(otherFunctions.walk),Func(base.localAvatar.setPos,167.151, -157.024, -0.64781),Wait(10),Func(factoryAuto.startFactory)).start()
+        else:
+            otherFunctions.checkDead()
+
+    def enterElevator(self):
+        for elevator in base.cr.doFindAll("Elevator"):
+            if elevator.getDestName()=='Front Entrance':
+                elevator.sendUpdate("requestBoard")
+                break
+            
+    def startFactory(self):
+        otherFunctions.restock()
+        self.enterElevator()
+        self.elevSeq.loop()
+            
+factoryAuto=FactoryAuto()
+
+DirectButton(text = ("Start VP Maxer", "START VP MAXER", "start VP maxer", "sTART VP mAXER"), scale=.06, pos = (0,-0,-.6), command=otherFunctions.start)
+DirectButton(text = ("Stop VP Maxer", "STOP VP MAXER", "stop VP maxer", "sTOP VP mAXER"), scale=.06, pos = (0,-0,-.7), command=otherFunctions.setStop)

@@ -1,0 +1,270 @@
+#CEO Autoer
+
+import toontown
+from direct.interval.IntervalGlobal import *
+from toontown.coghq import DistributedCountryClub
+from direct.distributed import DistributedObject
+from toontown.battle import DistributedBattle
+toontown.toonbase.ToontownBattleGlobals.SkipMovie=1
+
+try:
+    oldSendUpdate
+except:
+    oldSendUpdate=DistributedObject.DistributedObject.sendUpdate
+def sendUpdateHook(self, fieldName, args=[], sendToId=None):
+    if fieldName=="requestAttack":
+        oldSendUpdate(self,"requestAttack", args, sendToId)
+        oldSendUpdate(self,"movieDone",[])
+        self.d_rewardDone(base.localAvatar.doId)
+    else:
+        oldSendUpdate(self,fieldName, args, sendToId)
+DistributedObject.DistributedObject.sendUpdate=sendUpdateHook
+
+try:
+	oldEnter
+except:
+	oldEnter=toontown.toon.HealthForceAcknowledge.HealthForceAcknowledge.enter
+def newHook(self,hplevel):
+	try:
+		oldEnter(self,hplevel)
+		self.handleOk(base.localAvatar.getHp())
+		self.exit()
+	except:
+		pass
+toontown.toon.HealthForceAcknowledge.HealthForceAcknowledge.enter=newHook
+
+faceOffHook = lambda self, ts, name, callback:self.d_faceOffDone(self)
+DistributedCountryClub.DistributedCountryClub._DistributedLevelBattle__faceOff = faceOffHook
+
+
+class CeoAutoer:
+    def __init__(self):
+        self.end=Sequence(Wait(1),Func(self.walk),Func(self.teleBack,10000),Wait(8),Func(self.checkStocks))
+        
+        self.battle4=Sequence(Wait(2),Func(self.endBattle),Wait(1),Func(self.skipEnding),Func(self.end.start))
+    
+        self.battle3=Sequence(Wait(2),Func(self.exploit),Wait(2),Func(self.skipBattle3Ending),Func(self.battle4.start))
+    
+        self.battle2=Sequence(Wait(2),Func(self.feedTables),Wait(301),Func(self.skipBattle2Ending), Func(self.battle3.start))
+        
+        self.battle1=Sequence(Wait(1),Func(self.skipElevator),Wait(0.5),Func(self.skipIntro),Wait(2),Func(self.exploit),Wait(2),Func(self.skipTutorial),Func(self.battle2.start))
+        
+        self.checkElev=Sequence()
+        self.checkElev.append(Func(self.checkFinish,"BossbotBoss",self.checkElev,self.battle1,"find"))
+        self.checkElev.append(Wait(1.5))
+    
+        self.boardElevatorSeq=Sequence(Wait(2),Func(self.boardElevator),Wait(30),Func(self.checkElev.loop))
+        
+        self.lobbySeq=Sequence()
+        self.lobbySeq.append(Func(self.checkFinish,"Elevator",self.lobbySeq,self.boardElevatorSeq,"find"))
+        self.lobbySeq.append(Wait(1.5))
+        
+        self.exploitSeq=Sequence(Func(self.destroyBattle), Wait(.5), Func(self.walk))
+
+        self.stocks={1:[100]\
+                    ,2:[130,160]\
+                    ,3:[160,210,260]\
+                    ,4:[190,260,340,420]\
+                    ,5:[680,550,420,310,800]\
+                    ,6:[1300,500,680,890,1100]\
+                    ,7:[1780,1440,1100,810,2100]\
+                    ,8:[3400,1310,1780,2330,2880]\
+                    ,9:[2880,2120,5500,3770]\
+                    ,10:[3430,8900,4660]\
+                    ,11:[14400,5500]\
+                    ,12:[23300]\
+                    ,13:[2880]\
+                    ,14:[23300]\
+                    ,15:[2880]\
+                    ,16:[3770]\
+                    ,17:[4660]\
+                    ,18:[5500]\
+                    ,19:[23300]\
+                    ,20:[2880]\
+                    ,21:[3770]\
+                    ,22:[4660]\
+                    ,23:[5500]\
+                    ,24:[6440]\
+                    ,25:[7330]\
+                    ,26:[8220]\
+                    ,27:[9110]\
+                    ,28:[10000]\
+                    ,29:[23300]\
+                    ,30:[2880]\
+                    ,31:[3770]\
+                    ,32:[4660]\
+                    ,33:[5500]\
+                    ,34:[6440]\
+                    ,35:[7330]\
+                    ,36:[8220]\
+                    ,37:[9110]\
+                    ,38:[10000]\
+                    ,39:[23300]\
+                    ,40:[2880]\
+                    ,41:[3770]\
+                    ,42:[4660]\
+                    ,43:[5500]\
+                    ,44:[6440]\
+                    ,45:[7330]\
+                    ,46:[8220]\
+                    ,47:[9110]\
+                    ,48:[10000]\
+                    ,49:[23300]\
+                    ,50:[0]} 
+        
+        __builtins__.gagshop_zoneId = 4503
+        self.shouldContinue=True
+        
+    def walk(self):
+        try:
+            base.cr.playGame.getPlace().fsm.forceTransition('walk')
+        except:
+            pass
+    
+    def endBattle(self):
+        if base.cr.doFind('Bossbot'):
+            base.cr.doFind('Bossbot').sendUpdate('hitBoss', [250])
+    
+    def checkFinish(self,check,sequence,nextSeq,args):
+        if args=="notFind":
+            if base.cr.doFindAll(check)==[]:
+                sequence.finish()
+                nextSeq.start()
+        elif args=="find":
+            if base.cr.doFindAll(check)!=[]:
+                sequence.finish()
+                nextSeq.start()
+    
+    def loadGagshop(self):           
+        if not base.cr.doFind('Clerk'):
+            def requestZoneIdResponse(zoneId, context):
+                base.cr.doFind('WelcomeValleyManager').doCallbackContext(context, zoneId)
+            base.cr.doFind('WelcomeValleyManager').requestZoneIdResponse = requestZoneIdResponse
+            base.cr.doFind('WelcomeValleyManager').sendUpdate('requestZoneIdMessage', [0, 1])
+            __builtins__.contextId = base.cr.addInterest(base.localAvatar.defaultShard, __builtins__.gagshop_zoneId, 4, event=None)
+        try:
+            if not int(render.find('**/*gagShop_interior_english*').getZ()) == 8**8:
+                render.find('**/*gagShop_interior_english*').setZ(8**8)
+                for k in base.cr.doFindAll('Clerk'):
+                    k.freeAvatar = lambda *x:None
+                    k.nametag.unmanage(base.marginManager)
+        except:
+            pass
+     
+    def checkStocks(self):
+        if self.haveJb():
+            if self.shouldContinue:
+                if base.localAvatar.cogMerits[0] in self.stocks[base.localAvatar.cogLevels[0]+1]:
+                    self.start()
+                else:
+                    base.localAvatar.setSystemMessage(1,"Thanks for using freshollie's CEO autoer!")
+            else:
+                base.localAvatar.setSystemMessage(1,"Thanks for using freshollie's CEO autoer!")
+        else:
+            base.localAvatar.setSystemMessage(0,"You don't have any jellybeans, go use freshollie's fishing code")
+            
+    def unloadGagshop(self):
+        if hasattr(__builtins__, 'contextId'):
+            try:
+                base.cr.removeInterest(__builtins__.contextId)
+            except:
+                pass
+    
+    def buyGags(self):
+        if base.cr.doFindAll('Clerk'):
+            base.cr.doFind('Clerk').sendUpdate('setInventory', ['\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00', 248, 1])
+    
+    def restock(self):
+        Sequence(Func(self.loadGagshop),Wait(0.5),Func(self.buyGags),Wait(1),Func(self.unloadGagshop)).start()
+    
+    def getTreasure(self):
+        for treasure in base.cr.doFindAll("Treasure"):
+            treasure.d_requestGrab()
+        
+    def boardElevator(self):
+        base.cr.doFindAll("Elevator")[0].sendUpdate("requestBoard")
+
+    def enterLobby(self):
+        base.cr.doFindAll('Door')[0].sendUpdate('requestEnter')
+
+    def destroyBattle(self):
+        base.cr.doFind('SafeZone').sendUpdate('enterSafeZone')
+    
+    def exploit(self):
+        self.exploitSeq.start()
+    
+    def teleBack(self,zone):
+        try:
+            base.cr.playGame.getPlace().handleBookCloseTeleport(zone, zone)
+        except:
+            pass
+    
+    def checkDead(self):
+        if not base.cr.doFind('BossbotBoss') and not base.cr.doFind("DistributedCogHQDoor") and base.cr.doFind("donald"):
+            self.restock()
+            self.getTreasure()
+            self.walk()
+            Sequence(Wait(0.5),Func(self.teleBack,10000),Wait(6),Func(self.checkStocks)).start()
+    
+    def skipElevator(self):
+        if base.cr.doFind('BossbotBoss'):
+            base.cr.doFind('BossbotBoss')._DistributedBossCog__doneElevator()
+    
+    def haveJb(self):
+        if base.localAvatar.cogLevels[2]==49:
+            return True
+        elif base.localAvatar.getMoney()==0:
+            return False
+        else:
+            return True
+        
+    def skipIntro(self):
+        if base.cr.doFind('BossbotBoss'):
+            base.cr.doFind('BossbotBoss').exitIntroduction()
+        
+    def skipTutorial(self):
+        if base.cr.doFind('BossbotBoss'):
+            base.cr.doFind('BossbotBoss').exitPrepareBattleTwo()
+     
+    def skipBattle2Ending(self):
+        if base.cr.doFind('BossbotBoss'):
+            base.cr.doFind('BossbotBoss').exitPrepareBattleThree()
+    
+    def skipBattle3Ending(self):
+        if base.cr.doFind('BossbotBoss'):
+            base.cr.doFind('BossbotBoss').exitPrepareBattleFour()
+    
+    def skipEnding(self):
+        if base.cr.doFind('BossbotBoss'):
+            base.cr.doFind('BossbotBoss').exitBattleFour()
+            
+    def backToPlayground(self):
+        self.backToPlaygroundSeq.start()
+
+    def start(self):
+        self.shouldContinue=True
+        if base.cr.doFind("DistributedCogHQDoor"):
+            self.enterLobby()
+            self.lobbySeq.loop()
+        else:
+            self.checkDead()
+    
+    def setStop(self):
+        #self.checkDeadSeq.finish()
+        self.shouldContinue=False
+        base.localAvatar.setSystemMessage(1,"The Autoer will stop at the end of this run")
+     
+    def feedTables(self):
+        boss = base.cr.doFind('BossbotBoss')
+        tableFeedSeq=Sequence()
+        for i in range(3):
+            for i in range(len(boss.tables)):
+                for x in range(len(boss.tables[i].diners)):
+                    tableFeedSeq.append(Func(boss.sendUpdate,'requestGetFood', [1, 1, 0]))
+                    tableFeedSeq.append(Wait(0.1))
+                    tableFeedSeq.append(Func(boss.sendUpdate,'requestServeFood', [i, x]))
+                    tableFeedSeq.append(Wait(0.1))
+            tableFeedSeq.append(Wait(30))
+        tableFeedSeq.start()
+        
+ceoAutoer=CeoAutoer()
